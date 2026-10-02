@@ -7,6 +7,8 @@
 <link rel="icon" type="image/jpeg" href="https://profile.img.sooplive.co.kr/LOGO/nw/nwakdifl1/nwakdifl1.jpg">
 <link rel="stylesheet" href="../css/style.css">
 <link rel="stylesheet" href="../css/signal.css">
+<link rel="stylesheet" href="../css/schedule-calendar.css">
+<link rel="stylesheet" href="schedule-admin.css">
 <style>
 /* ── ADMIN 스킨 (NIGHT SIGNAL · 사진배경 없음) ── */
 body.adm{min-height:100svh;color:var(--pf-tx);background:linear-gradient(165deg,#070C18,#0A1226 55%,#081020) fixed}
@@ -418,9 +420,32 @@ textarea.input{resize:vertical}
   <!-- ═══════════ 📅 일정 ═══════════ -->
   <div class="tab-panel" id="tab-schedule">
     <div class="acard">
-      <p class="ct">일정 추가</p>
-      <div class="form-grid">
-        <div class="ff"><label class="lbl">날짜 *</label><input class="input" id="sch-date" type="date"></div>
+      <p class="ct">방송 일정 <span class="sch-count" id="sch-count"></span></p>
+      <div class="sch-toolbar">
+        <div class="sch-month"><h2 id="sch-month-title" aria-live="polite"></h2><div class="sch-controls">
+          <button class="btn" id="sch-prev" type="button" aria-label="이전 달">‹</button>
+          <button class="btn" id="sch-today" type="button">오늘</button>
+          <button class="btn" id="sch-next" type="button" aria-label="다음 달">›</button>
+        </div></div>
+        <button class="btn p" id="sch-new" type="button">+ 일정 등록</button>
+      </div>
+      <p class="sch-intro">날짜를 눌러 새 일정을 등록하고, 일정 막대를 눌러 수정하세요. 기간 일정은 여러 날짜에 이어서 표시돼요.</p>
+      <div class="sch-notice" id="sch-schema-note" hidden>기간 일정을 쓰려면 동봉한 <b>schedule-end-date.sql</b>을 한 번 적용해 주세요. 하루 일정 등록·수정은 지금도 가능해요.</div>
+      <div class="sch-notice sch-error" id="sch-load-error" role="alert" hidden><span id="sch-load-message"></span> <button class="sch-action" id="sch-retry" type="button">다시 불러오기</button></div>
+      <div class="sch-calendar-frame"><div id="sch-calendar" aria-label="방송 일정 달력"></div></div>
+    </div>
+    <div class="acard">
+      <p class="ct">등록된 일정</p>
+      <div class="table-wrap"><table class="sch-table"><thead><tr><th>날짜</th><th>시간</th><th>유형</th><th>제목</th><th>관리</th></tr></thead>
+      <tbody id="sch-list"><tr><td colspan="5" style="text-align:center;color:var(--pf-tx3);padding:20px">불러오는 중…</td></tr></tbody></table></div>
+    </div>
+    <dialog class="sch-editor" id="sch-editor" aria-labelledby="sch-editor-title">
+      <div class="sch-editor-head"><div><h2 id="sch-editor-title">새 일정 등록</h2><p>방송부터 긴 프로젝트까지, 한 번에 기록하세요.</p></div><button id="sch-close" class="sch-close" type="button" aria-label="일정 편집 닫기">×</button></div>
+      <form id="sch-form">
+      <fieldset id="sch-fields"><div class="form-grid">
+        <div class="ff"><label class="lbl" for="sch-date">시작일 *</label><input class="input" id="sch-date" type="date" required></div>
+        <div class="ff"><label class="lbl" for="sch-end-date">종료일 (기간 일정)</label><input class="input" id="sch-end-date" type="date"></div>
+        <p class="hint full" id="sch-range-hint" style="margin:-10px 0 0"></p>
         <div class="ff"><label class="lbl">유형</label>
           <select class="input" id="sch-type"><option value="방송">방송</option><option value="휴방">휴방</option></select></div>
         <div class="ff full"><label class="lbl">색상 (달력 라벨 색)</label>
@@ -440,14 +465,11 @@ textarea.input{resize:vertical}
         <div class="ff"><label class="lbl">2부 제목 (선택)</label><input class="input" id="sch-title2" placeholder="2부 있을 경우"></div>
         <div class="ff full"><label class="lbl">설명 (선택 · 날짜 모달에 표시)</label><textarea class="input" id="sch-desc" rows="2"></textarea></div>
         <div class="ff full"><label style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--pf-tx)"><input type="checkbox" id="sch-hl"> ✦ 하이라이트 (달력에서 테두리 강조)</label></div>
-        <div class="ff full rowR"><button class="btn p" onclick="addSchedule()">+ 추가</button></div>
-      </div>
-    </div>
-    <div class="acard">
-      <p class="ct">등록된 일정</p>
-      <div class="table-wrap"><table><thead><tr><th>날짜</th><th>시간</th><th>유형</th><th>제목</th><th>삭제</th></tr></thead>
-      <tbody id="sch-list"><tr><td colspan="5" style="text-align:center;color:var(--pf-tx3);padding:20px">불러오는 중…</td></tr></tbody></table></div>
-    </div>
+      </div></fieldset>
+      <div id="sch-form-error" class="sch-form-error" role="alert"></div>
+      <div class="sch-footer"><button class="btn sch-delete" id="sch-delete" type="button" hidden>일정 삭제</button><div class="rowR" style="margin-left:auto"><button class="btn" id="sch-cancel" type="button">취소</button><button class="btn p" id="sch-save" type="submit">일정 등록</button></div></div>
+      </form>
+    </dialog>
   </div>
 
   <!-- ═══════════ 🎵 노래 ═══════════ -->
@@ -599,6 +621,8 @@ textarea.input{resize:vertical}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="../supabase.js"></script>
+<script src="../js/schedule-calendar.js"></script>
+<script src="schedule-admin.js"></script>
 <script>
 /* ── profileKeys: 프로필 페이지 data-hook ↔ 여기 f-{key} ↔ DB 키 3종 일치 ── */
 const profileKeys = [
@@ -711,37 +735,7 @@ async function saveLocalProfile(){
   showToast('✅ 저장됐어요! (페이지에서 새로고침으로 확인)');
 }
 
-/* ── 일정 ── */
-async function loadSchedule(){
-  const data=await fetchAll('schedule',{order:'date',asc:false});   // admin은 최신 위로 (홈페이지 UPCOMING과 무관)
-  const t=document.getElementById('sch-list');
-  if(!data.length){ t.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--pf-tx3);padding:20px">등록된 일정 없음</td></tr>'; return; }
-  t.innerHTML=data.map(s=>{
-    const isOff=s.type==='휴방';
-    const badge=isOff?'<span class="badge off">OFF AIR</span>':'<span class="badge on">ON AIR</span>';
-    return `<tr><td>${s.date}</td><td>${s.time||'-'}</td><td>${badge}</td><td>${(s.title||'-').replace(/</g,'&lt;')}</td><td><button class="delete-btn" onclick="del('schedule',${s.id},loadSchedule)">🗑</button></td></tr>`;
-  }).join('');
-}
-async function addSchedule(){
-  if(needDb()) return;
-  const date=document.getElementById('sch-date').value;
-  if(!date){ showToast('❗ 날짜 필수!'); return; }
-  const type=document.getElementById('sch-type').value;
-  let title=document.getElementById('sch-title').value.trim();
-  if(!title) title=(type==='휴방'?'휴방':'방송');
-  const color=(document.querySelector('input[name="schcolor"]:checked')||{}).value||'blue';
-  const row={ title,date,type,color,
-    time:document.getElementById('sch-time').value,
-    time2:document.getElementById('sch-time2').value,
-    title2:document.getElementById('sch-title2').value.trim(),
-    description:document.getElementById('sch-desc').value.trim(),
-    highlight:document.getElementById('sch-hl').checked };
-  const ok=await insertRow('schedule',row);
-  if(ok){ showToast('✅ 추가!');
-    ['sch-title','sch-date','sch-time','sch-time2','sch-title2','sch-desc'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('sch-hl').checked=false; loadSchedule(); }
-  else showToast('❌ 실패');
-}
+/* 일정 등록/수정/삭제 및 달력은 schedule-admin.js에서 관리합니다. */
 
 /* ── 노래 ── */
 let songData=[];

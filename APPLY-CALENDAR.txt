@@ -1,0 +1,42 @@
+우시시 일정 달력 수정본 · 2026-10-02
+
+적용
+1. ZIP의 admin/, css/, js/, schedule/를 기존 사이트의 같은 위치에 덮어씁니다.
+   이 ZIP은 수정한 파일만 포함합니다. 기존 사이트 파일/이미지를 삭제하지 마세요.
+2. 기간 일정을 사용하려면 Supabase SQL Editor에서 schedule-end-date.sql만 실행합니다.
+   ALTER TABLE public.schedule ADD COLUMN IF NOT EXISTS end_date DATE;
+3. 사이트와 관리자 페이지를 새로고침합니다. 캐시가 남으면 강력 새로고침합니다.
+   기존 supabase_setup.sql 전체를 다시 실행할 필요는 없습니다.
+
+사용
+- 관리자 > 일정에서 날짜를 클릭하면 그 날짜로 새 등록창이 열립니다.
+- 기존 일정 막대 또는 목록의 수정 버튼을 클릭하면 수정창이 열립니다.
+- 종료일을 지정하면 마지막 날짜까지 포함하여 한 일정으로 저장합니다.
+- 주/월이 바뀌어도 기간 내 날짜에 이어지는 막대로 보입니다.
+- 기존 방송/휴방, 8색, 1부/2부 시간과 제목, 설명, 강조, 삭제를 유지합니다.
+- 종료일을 비우면 다시 하루 일정으로 바뀝니다.
+- SQL 적용 전에도 하루 일정 등록/수정은 가능하며 종료일 입력만 비활성화됩니다.
+- 기존 DB 전용 note/type2 필드는 수정할 때 덮어쓰지 않습니다.
+- 수정은 같은 ID에 UPDATE하며 새 일정이 추가되는 방식이 아닙니다.
+
+수정 파일
+admin/index.html
+admin/schedule-admin.js
+admin/schedule-admin.css
+schedule/index.html
+js/schedule-calendar.js
+css/schedule-calendar.css
+schedule-end-date.sql
+
+검수 범위
+실제 Chrome에서 운영 연결을 차단한 테스트 데이터로 등록/동일 ID 수정/삭제,
+기간 줄바꿈, 기존 옵션 보존, 저장 실패와 0행 수정, 종료일이 없는 기존 스키마,
+낮/밤, 모바일, 6주 달력, 윤년과 연도 이동을 확인했습니다.
+운영 DB 저장, SQL 실행, 배포는 수행하지 않았습니다.
+
+기존 권한 관련 확인
+원본 supabase_setup.sql의 schedule_all은 공개 쓰기도 허용하는 정책입니다.
+운영 DB에도 같은 정책이 적용됐는지는 확인하지 않았습니다.
+이번 수정에서는 기존 로그인/정책을 변경하지 않았으며,
+종료일 추가 SQL도 권한 정책을 변경하지 않습니다.
+관리자만 쓸 수 있는 운영 정책인지는 별도로 확인해야 합니다.

@@ -26,6 +26,8 @@ body.day .cal{background:rgba(255,255,255,.4)}
 .cal-title{font-family:"Arial Black",sans-serif;font-size:17px;letter-spacing:.04em;color:var(--pf-tx)}
 .cal-nav{width:36px;height:36px;border:1px solid var(--pf-line);background:rgba(169,213,255,.06);color:var(--pf-tx2);font-size:15px;cursor:pointer;transition:.2s}
 .cal-nav:hover{color:var(--pf-tx);background:rgba(169,213,255,.16)}
+.cal-controls{display:flex;align-items:center;gap:7px}
+.cal-today{width:auto;padding:0 11px;font-size:11px;font-weight:900}
 .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
 .cal-dow{padding:11px 4px;text-align:center;font-size:11px;font-weight:900;letter-spacing:.14em;color:#9dccfb;border-bottom:1px solid var(--pf-line)}
 body.day .cal-dow{color:#2f6fb4}
@@ -67,9 +69,12 @@ body.day .c-purple{background:#e8ddf7;color:#7a4fb0;border-color:#ccb9e8}
 body.day .c-red{background:#ffd9d9;color:#c44;border-color:#efb0b0}
 body.day .c-gray{background:#ececed;color:#666;border-color:#cfcfd2}
 /* 다가오는 일정 */
-.up{display:flex;align-items:center;gap:16px;padding:14px 16px;margin-bottom:9px;border:1px solid var(--pf-line);border-left:3px solid currentColor;cursor:pointer;transition:.2s}
+.up{display:flex;align-items:center;gap:16px;width:100%;text-align:left;font-family:inherit;padding:14px 16px;margin-bottom:9px;border:1px solid var(--pf-line);border-left:3px solid currentColor;cursor:pointer;transition:.2s}
 .up:hover{background:rgba(143,199,255,.07)}
+.up:focus-visible,.cal-nav:focus-visible,.sch-m .mc:focus-visible{outline:2px solid var(--pf-acc);outline-offset:3px}
+.up-highlight{box-shadow:inset 0 0 0 1px var(--pf-acc)}
 .up-date{flex:0 0 auto;width:96px;font-family:"Arial Black",sans-serif;font-size:13px;letter-spacing:.02em}
+.up-range{display:block;margin-top:4px;font-size:11px;line-height:1.4}
 .up-info{flex:1;min-width:0}
 .up-title{color:var(--pf-tx);font-size:15.5px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .up-time{color:var(--pf-tx3);font-size:12.5px;font-weight:700;margin-top:3px;letter-spacing:.06em}
@@ -77,10 +82,13 @@ body.day .c-gray{background:#ececed;color:#666;border-color:#cfcfd2}
 /* 날짜 모달 */
 #schOv{position:fixed;inset:0;z-index:80;background:rgba(2,6,14,.66);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px}
 #schOv.on{display:flex}
-.sch-m{width:min(420px,100%);padding:28px;border:1px solid rgba(175,214,255,.45);background:rgba(4,11,24,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 30px 90px rgba(0,0,0,.55)}
+.sch-m{width:min(420px,100%);max-height:calc(100dvh - 40px);overflow-y:auto;padding:28px;border:1px solid rgba(175,214,255,.45);background:rgba(4,11,24,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 30px 90px rgba(0,0,0,.55)}
 body.day .sch-m{background:rgba(248,252,255,.97);border-color:#2f6fb4}
-.sch-m .md{color:#9dccfb;font-size:11px;font-weight:900;letter-spacing:.2em;margin-bottom:14px}
+.sch-m .md{color:#9dccfb;font-size:11px;font-weight:900;letter-spacing:.2em;margin:0 0 14px}
 body.day .sch-m .md{color:#2f6fb4}
+.sch-event+.sch-event{border-top:1px solid var(--pf-line);padding-top:18px;margin-top:18px}
+.sch-m .mr{color:var(--pf-tx2);font-size:12px;line-height:1.6;margin-bottom:10px}
+.sch-m .mh{margin-left:6px;color:var(--pf-acc)}
 .sch-m .mb{display:inline-block;padding:5px 13px;border:1px solid;font-size:11px;font-weight:900;letter-spacing:.14em;margin-bottom:12px}
 .sch-m .mp{border:1px solid var(--pf-line);background:rgba(169,213,255,.05);padding:12px 15px;margin-bottom:8px}
 .sch-m .mp .pt{color:#9dccfb;font-size:11px;font-weight:900;letter-spacing:.14em}
@@ -100,6 +108,7 @@ body.day .sch-m .mp .pt{color:#2f6fb4}
   .up-b{padding:5px 10px;font-size:10px}
 }
 </style>
+<link rel="stylesheet" href="../css/schedule-calendar.css">
 </head>
 
 <body class="sg">
@@ -148,11 +157,14 @@ body.day .sch-m .mp .pt{color:#2f6fb4}
     <p class="pf-kick">FILE 01 <em>/ CALENDAR · 달력</em></p>
     <div class="cal">
       <div class="cal-head">
-        <button class="cal-nav" onclick="changeMonth(-1)" aria-label="이전 달">‹</button>
-        <span class="cal-title" id="calTitle"></span>
-        <button class="cal-nav" onclick="changeMonth(1)" aria-label="다음 달">›</button>
+        <button class="cal-nav" type="button" onclick="changeMonth(-1)" aria-label="이전 달">‹</button>
+        <span class="cal-title" id="calTitle" aria-live="polite"></span>
+        <div class="cal-controls">
+          <button class="cal-nav cal-today" type="button" onclick="goToday()">오늘</button>
+          <button class="cal-nav" type="button" onclick="changeMonth(1)" aria-label="다음 달">›</button>
+        </div>
       </div>
-      <div class="cal-grid" id="calGrid"></div>
+      <div id="calGrid"></div>
     </div>
   </div>
 
@@ -169,8 +181,8 @@ body.day .sch-m .mp .pt{color:#2f6fb4}
 </footer>
 
 <!-- 날짜 상세 모달 -->
-<div id="schOv" onclick="if(event.target===this)closeModal()">
-  <div class="sch-m" id="schBody"></div>
+<div id="schOv" aria-hidden="true" onclick="if(event.target===this)closeModal()">
+  <div class="sch-m" id="schBody" role="dialog" aria-modal="true" aria-labelledby="schTitle" tabindex="-1"></div>
 </div>
 
 <!-- SEND SIGNAL 문의 모달 -->
@@ -197,12 +209,17 @@ body.day .sch-m .mp .pt{color:#2f6fb4}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="../supabase.js"></script>
 <script src="../js/signal.js"></script>
+<script src="../js/schedule-calendar.js"></script>
 <script>
-let currentYear, currentMonth, allSchedule = [];
+let currentYear, currentMonth, allSchedule = [], selectedDate = '', modalTrigger = null, modalOverflow = '';
 const DAYS = ['일','월','화','수','목','금','토'];
-function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function esc(s){ return UsisiCalendar.escapeHtml(s); }
 function kind(t){ return t === '휴방' ? 'off' : 'on'; }
-function colorClass(s){ return 'c-' + (s.color || (kind(s.type)==='off'?'pink':'blue')); }
+function colorClass(s){ return 'c-' + (['green','pink','yellow','orange','blue','purple','red','gray'].includes(s.color) ? s.color : (kind(s.type)==='off'?'pink':'blue')); }
+function shortDate(dateStr, withYear) {
+  const dd = new Date(dateStr + 'T00:00:00');
+  return `${withYear ? dd.getFullYear()+'-' : ''}${String(dd.getMonth()+1).padStart(2,'0')}-${String(dd.getDate()).padStart(2,'0')} ${DAYS[dd.getDay()]}`;
+}
 
 async function init() {
   const now = new Date(); currentYear = now.getFullYear(); currentMonth = now.getMonth();
@@ -221,69 +238,86 @@ function changeMonth(d) {
   renderCalendar();
   if (typeof enableIframeAutoHeight === 'function') enableIframeAutoHeight();
 }
+function goToday() {
+  const now = new Date();
+  currentYear = now.getFullYear(); currentMonth = now.getMonth();
+  selectedDate = UsisiCalendar.formatDate(now);
+  renderCalendar();
+  if (typeof enableIframeAutoHeight === 'function') enableIframeAutoHeight();
+}
 function renderCalendar() {
   document.getElementById('calTitle').textContent = `${currentYear}년 ${currentMonth+1}월`;
-  const grid = document.getElementById('calGrid');
-  const first = new Date(currentYear, currentMonth, 1);
-  const last = new Date(currentYear, currentMonth+1, 0);
-  const startDay = first.getDay();
-  const today = new Date();
-  let html = DAYS.map(d => `<div class="cal-dow">${d}</div>`).join('');
-  const prevLast = new Date(currentYear, currentMonth, 0).getDate();
-  for (let i = startDay-1; i >= 0; i--) html += `<div class="cal-cell other"><span class="cal-date">${prevLast-i}</span></div>`;
-  for (let d = 1; d <= last.getDate(); d++) {
-    const dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const isToday = today.getFullYear()===currentYear && today.getMonth()===currentMonth && today.getDate()===d;
-    const events = allSchedule.filter(s => s.date === dateStr);
-    const hl = events.some(e=>e.highlight);
-    let evHtml = events.map(e => {
-      const label = (e.time ? e.time+' ' : '') + (e.title || (kind(e.type)==='off'?'휴방':'방송'));
-      return `<div class="ev ${colorClass(e)}" title="${esc(label)}">${esc(label)}</div>`;
-    }).join('');
-    const cls = `cal-cell${isToday?' today':''}${events.length?' has':''}${hl?' hl':''}`;
-    const click = events.length ? `onclick="openModal('${dateStr}')"` : '';
-    html += `<div class="${cls}" ${click}><span class="cal-date">${d}</span>${evHtml}</div>`;
-  }
-  const totalCells = startDay + last.getDate();
-  const rem = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
-  for (let i = 1; i <= rem; i++) html += `<div class="cal-cell other"><span class="cal-date">${i}</span></div>`;
-  grid.innerHTML = html;
+  UsisiCalendar.render(document.getElementById('calGrid'), {
+    year: currentYear, month: currentMonth, events: allSchedule, selectedDate,
+    editable: false,
+    onDateClick: date => openModal(date),
+    onEventClick: (event, date) => openModal(date)
+  });
 }
 function renderUpcoming() {
-  const today = new Date().toISOString().split('T')[0];
-  const upcoming = allSchedule.filter(s => s.date >= today).slice(0, 12);
+  const today = UsisiCalendar.today();
+  const upcoming = allSchedule.filter(s => UsisiCalendar.endDate(s) >= today)
+    .slice().sort((a,b) => a.date.localeCompare(b.date) || String(a.time || '').localeCompare(String(b.time || ''))).slice(0, 12);
   const el = document.getElementById('upcoming');
   if (!upcoming.length) { el.innerHTML = '<div class="sg-empty"><span class="ic">✦</span>다가오는 신호가 없어요 — 휴방은 랜덤이에요</div>'; return; }
   el.innerHTML = upcoming.map(s => {
-    const dd = new Date(s.date + 'T00:00:00'); const k = kind(s.type);
+    const k = kind(s.type), end = UsisiCalendar.endDate(s), ongoing = s.date < today;
+    const withYear = s.date.slice(0,4) !== end.slice(0,4);
     const label = k==='off' ? 'OFF AIR' : 'ON AIR';
     const times = [s.time, s.time2].filter(Boolean).join(' · ');
-    return `<div class="up ${colorClass(s)}" onclick="openModal('${s.date}')">
-      <div class="up-date">${String(dd.getMonth()+1).padStart(2,'0')}-${String(dd.getDate()).padStart(2,'0')} ${DAYS[dd.getDay()]}</div>
-      <div class="up-info"><div class="up-title">${esc(s.title || (k==='off'?'휴방':'방송'))}</div>${times?`<div class="up-time">${esc(times)}</div>`:''}</div>
+    return `<button type="button" class="up ${colorClass(s)}${s.highlight?' up-highlight':''}" data-date="${esc(ongoing ? today : s.date)}">
+      <span class="up-date">${esc(shortDate(s.date,withYear))}${end!==s.date?`<span class="up-range">~ ${esc(shortDate(end,withYear))}</span>`:''}</span>
+      <span class="up-info"><span class="up-title" style="display:block">${s.highlight?'✦ ':''}${esc(s.title || (k==='off'?'휴방':'방송'))}</span>${times || ongoing?`<span class="up-time" style="display:block">${ongoing?'진행 중'+(times?' · ':''):''}${esc(times)}</span>`:''}</span>
       <span class="up-b ${colorClass(s)}">${label}</span>
-    </div>`;
+    </button>`;
   }).join('');
+  el.querySelectorAll('[data-date]').forEach(button => button.addEventListener('click', () => openModal(button.dataset.date)));
 }
 function openModal(dateStr) {
-  const events = allSchedule.filter(s => s.date === dateStr);
+  const events = allSchedule.filter(s => UsisiCalendar.contains(s, dateStr));
   if (!events.length) return;
+  selectedDate = dateStr;
+  const overlay = document.getElementById('schOv');
+  if (!overlay.classList.contains('on')) {
+    modalTrigger = document.activeElement;
+    modalOverflow = document.body.style.overflow;
+  }
   const dd = new Date(dateStr + 'T00:00:00');
-  let html = `<div class="md">✦ ${dateStr} (${DAYS[dd.getDay()]})</div>`;
+  let html = `<h2 class="md" id="schTitle">✦ ${esc(dateStr)} (${DAYS[dd.getDay()]})</h2>`;
   events.forEach(s => {
-    const k = kind(s.type);
-    html += `<div class="mb ${colorClass(s)}">${k==='off'?'OFF AIR':'ON AIR'}</div>`;
+    const k = kind(s.type), end = UsisiCalendar.endDate(s);
+    html += `<section class="sch-event"><div class="mb ${colorClass(s)}">${k==='off'?'OFF AIR':'ON AIR'}${s.highlight?'<span class="mh" aria-label="강조 일정">✦</span>':''}</div>`;
+    if (end !== s.date) html += `<div class="mr">${esc(s.date)} ~ ${esc(end)}</div>`;
     html += `<div class="mp"><div class="pt">${s.time?esc(s.time):'1부'}</div><div class="pn">${esc(s.title || (k==='off'?'휴방':'방송'))}</div></div>`;
     if (s.title2 || s.time2) {
       html += `<div class="mp"><div class="pt">${s.time2?esc(s.time2):'2부'}</div><div class="pn">${esc(s.title2||'방송')}</div></div>`;
     }
     if (s.description) html += `<div class="mdsc">${esc(s.description)}</div>`;
+    html += '</section>';
   });
-  html += `<button class="mc" onclick="closeModal()">CLOSE</button>`;
+  html += `<button type="button" class="mc" onclick="closeModal()" aria-label="일정 상세 닫기">CLOSE</button>`;
   document.getElementById('schBody').innerHTML = html;
-  document.getElementById('schOv').classList.add('on');
+  overlay.classList.add('on');
+  overlay.setAttribute('aria-hidden','false');
+  document.body.style.overflow = 'hidden';
+  document.querySelector('#schBody .mc').focus();
 }
-function closeModal(){ document.getElementById('schOv').classList.remove('on'); }
+function closeModal(){
+  const overlay = document.getElementById('schOv');
+  if (!overlay.classList.contains('on')) return;
+  overlay.classList.remove('on');
+  overlay.setAttribute('aria-hidden','true');
+  document.body.style.overflow = modalOverflow;
+  if (modalTrigger && modalTrigger.isConnected) modalTrigger.focus();
+}
+document.addEventListener('keydown', event => {
+  if (!document.getElementById('schOv').classList.contains('on')) return;
+  if (event.key === 'Escape') { event.preventDefault(); closeModal(); }
+  if (event.key === 'Tab') {
+    event.preventDefault();
+    document.querySelector('#schBody .mc').focus();
+  }
+});
 init();
 </script>
 </body>
